@@ -9,10 +9,12 @@ object VotingSystem extends App{
   class Citizen extends Actor{
     import Citizen._
     import VoteAggregator._
-    var votedCandidate :Option[Candidate] = None
     override def receive: Receive = {
-      case Vote(candidate) ⇒ votedCandidate = Some(candidate)
-      case VoteStatusRequest ⇒ sender() ! VoteStatusReply(votedCandidate)
+      case Vote(candidate) ⇒ context.become(votedTo(candidate))
+      case VoteStatusRequest ⇒ sender() ! VoteStatusReply(None) //in case we got request but never vote before
+    }
+    def votedTo(candidate: Candidate) : Receive = {
+      case VoteStatusRequest ⇒ sender() ! VoteStatusReply(Some(candidate))
     }
 
   }
@@ -26,24 +28,29 @@ object VotingSystem extends App{
     case class VoteStatusReply(candidate: Option[Candidate])
   }
   class VoteAggregator extends Actor {
-    var votes : Map[Candidate,Count] = Map()
-    var waitingCitizens: Set[CitizenRef] = Set()
+//    var votes : Map[Candidate,Count] = Map()
+//    var waitingCitizens: Set[CitizenRef] = Set()
     import VoteAggregator._
     import Citizen._
-    override def receive: Receive = {
-      case AggregateVotes(citizens) ⇒
-        waitingCitizens = citizens
+    override def receive: Receive = initReceiver
+
+    def initReceiver: Receive ={
+      case AggregateVotes(citizens) ⇒ {
         citizens.foreach(citizen ⇒ citizen ! VoteStatusRequest)
+        context.become(awaitPollStatus(citizens,Map()))
+      }
+    }
+    def awaitPollStatus(citizens: Set[CitizenRef], votes: Map[Candidate, Count]): Receive ={
       case VoteStatusReply(None) ⇒
         sender() ! VoteStatusRequest //might end in infinite if not all citizens vote! but this is our protocol
       case VoteStatusReply(Some(candidate)) ⇒
-        val newWaitingCitizens = waitingCitizens - sender()
+        val newWaitingCitizens = citizens - sender()
         val newVote: Count = votes.getOrElse(candidate,0) + 1
-        votes = votes + (candidate → newVote) //updating vote of candidate
+        val newVotes = votes + (candidate→ newVote) //updating vote of candidate
         if(newWaitingCitizens.isEmpty){
-          println(s"[VoteAggregator] poll status $votes")
+          println(s"[VoteAggregator] poll status $newVotes")
         }else{
-          waitingCitizens = newWaitingCitizens
+          context.become( awaitPollStatus(newWaitingCitizens,newVotes))
         }
     }
   }
