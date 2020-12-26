@@ -40,19 +40,19 @@ object Playground extends App{
       case number : Int ⇒ println(s"[${context.self}] got a number" + number)
       case SpecialMessage(content) ⇒ self ! content //tell to myself the content in async manner to message(content)
       case SayHiTo(otherActor) ⇒ otherActor ! "Hi!"
-      case WirelessPhoneMessage(content,ref) ⇒ ref forward (content+"s") //save the original sender
+      case WirelessPhoneMessage(content,ref) ⇒ ref forward (content+"s") //save the original sender (noSender)
       case _ ⇒ println(s"[${context.self}]I have no idea what you want from me dude")
     }
   }
   //discouraged
   val personActor= actorSystem.actorOf(Props(new Person("Aviad")),"personActor")
   personActor ! "please call me"
-  //better practice - declare companion object that returns Props objects
+  //better practice - declare companion object that returns Props objects (factory method)
   object Person{
-    def props(name:String) = Props(new Person(name))
+    def props(name:String): Props = Props(new Person(name))
   }
   val aviadActor = actorSystem.actorOf(Person.props("Aviad"),"aviadActor")
-  //messages can be of any type, but IMMUTABLE and serializable!
+  //messages can be of any type, but IMMUTABLE and serializable! (this why we use case class/object)
   aviadActor ! "please call me"
   aviadActor ! 5
   aviadActor ! SpecialMessage("some content")
@@ -64,7 +64,7 @@ object Playground extends App{
   case class SayHiTo(ref:ActorRef)
 
   alice ! SayHiTo(bob)
-  // send to dlq
+  // send to dlq (since sender is null and hi handler try to send to null)
   alice ! "Hi!"
 
   //forward messages (D -> A -> B) = sending a message with the original sender
