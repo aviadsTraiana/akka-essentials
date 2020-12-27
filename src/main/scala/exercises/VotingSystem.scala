@@ -9,8 +9,9 @@ object VotingSystem extends App{
   class Citizen extends Actor{
     import Citizen._
     import VoteAggregator._
+    //var candidate: Option[Candidate] = None
     override def receive: Receive = {
-      case Vote(candidate) ⇒ context.become(votedTo(candidate))
+      case Vote(candidate) ⇒ context.become(votedTo(candidate)) //this.candidate = candidate
       case VoteStatusRequest ⇒ sender() ! VoteStatusReply(None) //in case we got request but never vote before
     }
     def votedTo(candidate: Candidate) : Receive = {
