@@ -50,10 +50,10 @@ class Person extends Actor {
   import BankAccountActor._
   override def receive: Receive = {
     case UseAccountToLiveLikeARich(bankAccount) ⇒
-      bankAccount ! Deposit(1_000_000)
-      bankAccount ! Withdraw(20_000)
-      bankAccount ! Withdraw(2_000_000)
-      bankAccount ! Withdraw(500_000)
+      bankAccount ! Deposit(1000000)
+      bankAccount ! Withdraw(20000)
+      bankAccount ! Withdraw(2000000)
+      bankAccount ! Withdraw(500000)
       bankAccount ! Statement
     case responseFromBank ⇒ println(responseFromBank)
   }
