@@ -46,7 +46,7 @@ class TimedAssertionsSpec extends TestKit(
             within(1 second) { //probe is not enforced by within, but with
                 val probe = TestProbe()
                 probe.send(workerActor, "work")
-                probe.expectMsg(WorkResult(42)) // timeout of 0.3 seconds (from config file)
+                probe.expectMsg(WorkResult(42)) // timeout of 0.3 seconds (from config file akka.test.single-expect-default)
             }
         }
 
