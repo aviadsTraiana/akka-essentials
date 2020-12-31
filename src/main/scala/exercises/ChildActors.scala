@@ -14,7 +14,7 @@ object ChildActors extends App {
   //Distributed word counting
   class WordCounterMaster extends Actor {
     import WordCounterMaster._
-    var queue :Queue[ActorRef] = Queue()
+    //var queue :Queue[ActorRef] = Queue()
     override def receive: Receive = {
       case Initialize(n) ⇒ {
         println("[master] initializing...")
