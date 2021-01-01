@@ -1,6 +1,9 @@
 package exercises.faulttolerance
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Kill, PoisonPill, Props, Terminated}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSelection, ActorSystem, Kill, PoisonPill, Props, Terminated}
+
+
+import scala.concurrent.Future
 
 object StartingStoppingActors extends App {
 
@@ -90,8 +93,12 @@ object StartingStoppingActors extends App {
 
   val watcher = system.actorOf(Props[Watcher], "watcher")
   watcher ! StartChild("watchedChild")
-  val watchedChild = system.actorSelection("/user/watcher/watchedChild")
-  Thread.sleep(500)
+  import scala.concurrent.duration._
+  val watchedChild: ActorSelection = system.actorSelection("/user/watcher/watchedChild")
+  val future: Future[ActorRef] = watchedChild.resolveOne(500.milliseconds)
+//    Thread.sleep(500)
+//  watchedChild ! PoisonPill
+  import scala.concurrent.ExecutionContext.Implicits.global
+  future.foreach(wc => wc ! PoisonPill)
 
-  watchedChild ! PoisonPill
 }
